@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Project</title>
+	<link rel="icon" href="icon.png" type="image/png">
+    <style>
+        @font-face {
+            font-family: 'Cantarell';
+            src: url('Cantarell-VF.otf') format('opentype');
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-family: 'Cantarell', sans-serif;
+        }
+
+        #space {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            animation: fadeIn 3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        #logo {
+            position: absolute;
+            top: 20px;
+            opacity: 0;
+            animation: fadeInLogo 5s forwards;
+            width: 60px;
+            height: auto;
+        }
+
+        #title {
+            font-size: 3em;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInText 4s forwards;
+            animation-delay: 1s;
+        }
+
+        #subtitle {
+            font-size: 1.5em;
+            color: white;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInSubtitle 4s forwards;
+            animation-delay: 1.5s;
+        }
+
+        #projects {
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeInProjects 4s forwards;
+            animation-delay: 2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .project-link {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: black;
+            background-color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .project-link img {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .project-link:hover {
+            background-color: #f0f0f0;
+        }
+
+        #thanks {
+            margin-top: 5px;
+            color: white;
+            opacity: 0;
+            animation: fadeInThanks 4s forwards;
+            animation-delay: 4s;
+			text-align: center;
+			align-items: center;
+        }
+
+        #year {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: white;
+            opacity: 0;
+            animation: fadeInYear 3s forwards;
+            animation-delay: 5s;
+        }
+
+        @keyframes fadeInLogo {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInText {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInSubtitle {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInProjects {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInThanks {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInYear {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="space"></div>
+    <img id="logo" src="logo.png" alt="Logo">
+    <div id="title">Crystal Project</div>
+    <div id="subtitle">Наши проекты:</div>
+    <div id="projects">
+        <a class="project-link" href="https://github.com/pj-crystal?tab=repositories">
+            <img src="1.svg" alt="Project 1">
+            Программы на GitHub с открытым исходным кодом
+        </a>
+    </div>
+    <div id="thanks">
+        <p>Благодарности:</p>
+        <p>Егор aka Linux Tester</p>
+        <p>Yaroslav Savin, Chakilev Arseniy</p>
+        <p>everyofflineuser</p>
+    </div>
+    <div id="year">
+        <p>2023-2024г.</p>
+    </div>
+    <script>
+        window.addEventListener('load', () => {
+            const canvas = document.createElement('canvas');
+            document.getElementById('space').appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            const stars = [];
+            const starCount = 500;
+
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    z: Math.random() * canvas.width,
+                });
+            }
+
+            function animateStars() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+
+                stars.forEach(star => {
+                    star.z -= 2;
+
+                    if (star.z <= 0) {
+                        star.z = canvas.width;
+                    }
+
+                    const x = (star.x - canvas.width / 2) * (canvas.width / star.z);
+                    const y = (star.y - canvas.height / 2) * (canvas.width / star.z);
+                    const size = canvas.width / star.z;
+
+                    ctx.beginPath();
+                    ctx.arc(x + canvas.width / 2, y + canvas.height / 2, size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animateStars);
+            }
+
+            animateStars();
+        });
+    </script>
+</body>
+</html>
