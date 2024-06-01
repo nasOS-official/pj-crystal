@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Онлайн радио</title>
+<style>
+@font-face {
+  font-family: 'Cantarell';
+  src: url('Cantarell-VF.otf') format('opentype');
+}
+    body {
+        font-family: Cantarell, sans-serif;
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+        user-select: none; /* Non-prefixed version, currently supported by Chrome, Opera and Edge */
+    }
+
+    #radioList {
+        width: 90%;
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    #radioList .radioStation {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .stationCircle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+
+    .stationCircle span {
+        font-size: 24px;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .stationInfo {
+        font-size: 14px;
+        flex-grow: 1;
+    }
+
+    #playStopButton {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+	    width: 30px;
+	    height: 30px;
+	    font-size: 14px;
+	    font-weight: bold;
+	    padding: 10px;
+	    cursor: pointer;
+	    transition: background-color 0.3s;
+	    background-color: white;
+	    border: none;
+	    border-radius: 5px;
+    }   
+    #playStopButton:hover {
+        background-color: #a9a9a9;
+    }
+    .deleteIcon {
+        position: absolute;
+        top: 10px;
+        right: 0;
+        cursor: pointer;
+        padding: 5px;
+        background-color: transparent;
+        border: none;
+    }
+
+    .deleteIcon img {
+        width: 20px;
+        height: 20px;
+    }
+    img {
+        user-select: none;
+        pointer-events: none;
+    }
+    #controlsContainer {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    #volume-bar {
+        width: 100px;
+        margin-right: 10px;
+    }
+
+    #mute-button {
+        padding: 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .controlButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background-color: white;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+.controlButton:hover {
+    background-color: #a9a9a9;
+}
+    *:active, *:focus {
+  outline: none !important;
+}
+*::-moz-focus-inner {
+  border: 0 !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0075ff;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+#myModal button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 130px;
+    height: 30px;
+    font-family: Cantarell, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background-color: #d8d8d8;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+#myModal button:hover {
+    background-color: #a9a9a9;
+}
+
+#stationColor {
+    margin-top: 8px;
+    padding: 8px;
+    border: none;
+    border-radius: 0px;
+    cursor: pointer;
+    background-color: white;
+}
+</style>
+</head>
+<body>
+<div id="radioList">
+    <!-- Круги с названиями радиостанций -->
+</div>
+
+<div id="controlsContainer">
+    <button id="playStopButton">
+        <img id="playIcon" src="images/play.svg" width="16" height="16">
+        <img id="stopIcon" src="images/stop.svg" width="16" height="16">
+    </button>
+    <button id="mute-button"><img src="images/volume.svg" width="16" height="16"></button>
+    <input type="range" id="volume-bar" min="0" max="100" value="40">
+    <button id="addStation" class="controlButton">
+        <img src="images/add.svg" width="16" height="16">
+    </button>
+</div>
+<div id="errorMessage" style="display: none;"></div>
+<div id="myModal" style="display: none;">
+    <label for="stationIP">IP станции:</label>
+    <input type="text" id="stationIP"><br>
+    <label for="stationName">Название:</label>
+    <input type="text" id="stationName"><br>
+    <label for="stationColor">Цвет:</label>
+    <input type="color" id="stationColor"><br>
+    <button id="saveStation">Сохранить</button>
+</div>
+
+<audio id="audioPlayer" controls style="display: none;"></audio>
+
+<script>
+    let db;
+    const request = window.indexedDB.open('radioStationsDB', 1);
+
+    request.onsuccess = function(event) {
+        console.log('База данных открыта успешно');
+        db = event.target.result;
+        loadRadioStations();
+    };
+
+    request.onerror = function(event) {
+        console.error('Ошибка при открытии базы данных:', event.target.errorCode);
+    };
+
+    request.onupgradeneeded = function(event) {
+        console.log('Создание или обновление базы данных');
+        const db = event.target.result;
+        const objectStore = db.createObjectStore('radioStations', { keyPath: 'id', autoIncrement:true });
+        objectStore.createIndex('name', 'name', { unique: true });
+        console.log('База данных готова');
+    };
+
+    function loadRadioStations() {
+        const transaction = db.transaction(['radioStations'], 'readonly');
+        const objectStore = transaction.objectStore('radioStations');
+        const request = objectStore.getAll();
+
+        request.onsuccess = function(event) {
+            const radioStations = event.target.result;
+            renderRadioList(radioStations);
+        };
+
+        request.onerror = function(event) {
+            console.error('Ошибка при извлечении радиостанций:', event.target.error);
+        };
+    }
+
+    const playIcon = document.getElementById('playIcon');
+    const stopIcon = document.getElementById('stopIcon');
+    const muteButton = document.getElementById('mute-button');
+    const volumeBar = document.getElementById('volume-bar');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    let currentStationIndex = null;
+    let isPlaying = false;
+
+    playIcon.style.display = isPlaying ? 'none' : 'block';
+    stopIcon.style.display = isPlaying ? 'block' : 'none';
+
+    document.getElementById('playStopButton').addEventListener('click', function() {
+        if (isPlaying) {
+            audioPlayer.pause();
+            isPlaying = false;
+        } else {
+            const radioStations = document.querySelectorAll('.radioStation');
+            const currentStation = radioStations[currentStationIndex];
+            if (currentStation) {
+                playStation(currentStation.dataset.ip);
+                isPlaying = true;
+            }
+        }
+        playIcon.style.display = isPlaying ? 'none' : 'block';
+        stopIcon.style.display = isPlaying ? 'block' : 'none';
+    });
+
+    volumeBar.addEventListener('input', function() {
+        const volumeValue = volumeBar.value / 100;
+        audioPlayer.volume = volumeValue;
+    });
+
+    muteButton.addEventListener('click', function() {
+        audioPlayer.muted = !audioPlayer.muted;
+        muteButton.innerHTML = audioPlayer.muted ? '<img src="images/mute.svg" width="16" height="16">' : '<img src="images/volume.svg" width="16" height="16">';
+    });
+
+    function renderRadioList(radioStations) {
+        const radioList = document.getElementById('radioList');
+        radioList.innerHTML = '';
+        radioStations.forEach((station, index) => {
+            const div = document.createElement('div');
+            div.className = 'radioStation';
+            div.dataset.ip = station.ip;
+            const circle = document.createElement('div');
+            circle.className = 'stationCircle';
+            circle.style.backgroundColor = station.color;
+            const firstLetter = document.createElement('span');
+            firstLetter.textContent = station.name.charAt(0).toUpperCase();
+            circle.appendChild(firstLetter);
+            const stationInfo = document.createElement('div');
+            stationInfo.className = 'stationInfo';
+            stationInfo.textContent = station.name;
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'deleteIcon';
+            deleteButton.innerHTML = '<img src="images/del.svg" alt="Удалить">';
+            deleteButton.addEventListener('click', () => removeStation(station.id));
+            div.appendChild(circle);
+            div.appendChild(stationInfo);
+            div.appendChild(deleteButton);
+            div.addEventListener('click', () => {
+                if (currentStationIndex !== index) {
+                    currentStationIndex = index;
+                    playStation(station.ip);
+                }
+            });
+            radioList.appendChild(div);
+        });
+    }
+
+function playStation(ip) {
+    isPlaying = true;
+    playIcon.style.display = isPlaying ? 'none' : 'block';
+    stopIcon.style.display = isPlaying ? 'block' : 'none';
+    audioPlayer.src = ip;
+    audioPlayer.play().catch((error) => {
+        console.error('Failed to play:', error);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = ':( При воспроизведении радиостанции возникла ошибка! Убедитесь, что вы ввели правильный IP-адрес и радиостанция доступна для прослушивания, также рекомендуется выключить VPN';
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+            errorMessage.style.display = 'none';
+        }, 10000);
+    });
+}
+
+    function addStationToRadioList(stationData) {
+        const transaction = db.transaction(['radioStations'], 'readwrite');
+        const objectStore = transaction.objectStore('radioStations');
+        const request = objectStore.add(stationData);
+
+        request.onsuccess = function(event) {
+            console.log('Новая радиостанция добавлена успешно');
+            loadRadioStations();
+        };
+
+        request.onerror = function(event) {
+            console.error('Ошибка при добавлении радиостанции:', event.target.error);
+        };
+    }
+
+    function removeStation(id) {
+        const transaction = db.transaction(['radioStations'], 'readwrite');
+        const objectStore = transaction.objectStore('radioStations');
+        const request = objectStore.delete(id);
+
+        request.onsuccess = function(event) {
+            console.log('Радиостанция удалена успешно');
+            loadRadioStations();
+        };
+
+        request.onerror = function(event) {
+            console.error('Ошибка при удалении радиостанции:', event.target.error);
+        };
+    }
+
+    document.getElementById('addStation').addEventListener('click', function() {
+        document.getElementById('myModal').style.display = 'block';
+    });
+
+    document.getElementById('saveStation').addEventListener('click', function() {
+        const stationIP = document.getElementById('stationIP').value;
+        const stationName = document.getElementById('stationName').value;
+        const stationColor = document.getElementById('stationColor').value;
+
+        if (stationIP.trim() === '' || stationName.trim() === '') {
+            document.getElementById('myModal').style.display = 'none';
+            return;
+        }
+
+        const stationData = {
+            ip: stationIP,
+            name: stationName,
+            color: stationColor
+        };
+
+        addStationToRadioList(stationData);
+        document.getElementById('myModal').style.display = 'none';
+    });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script src="images/jsmediatags.min.js"></script>
+<meta charset="UTF-8">
+<title>Аудиоплеер</title>
+<style>
+@font-face {
+  font-family: 'Cantarell';
+  src: url('Cantarell-VF.otf') format('opentype');
+}
+  body { font-family: Cantarell, sans-serif; margin: 0; }
+  #audio-player { width: 100%; height="100%" }
+  #playlist { 
+    list-style-type: none; 
+    margin: 0; 
+    padding: 0; 
+    border: 1px solid silver;
+	border-radius: 8px;	
+    height: 400px;
+    overflow-y: auto;
+	-webkit-user-select: none; /* Safari */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+	user-select: none; /* Non-prefixed version, currently supported by Chrome, Opera and Edge */
+  }
+  #playlist:empty:before { 
+    content: "Перетащите ваши аудиофайлы сюда"; 
+    display: block; 
+    text-align: center; 
+    padding: 20px; 
+    color: grey;
+  }
+  #playlist li { 
+    cursor: pointer; 
+    padding: 5px; 
+    border-bottom: 1px solid #ccc; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+  }
+  #playlist li:hover { background-color: #f7f7f7; }
+  #playlist li.active { background-color: #e3e3e3; }
+  .track-cover { width: 50px; height: 50px; }
+  .track-title { font-weight: bold; }
+  .track-artist { font-style: italic; }
+  .delete-btn { 
+    background-color: red; 
+    color: white; 
+    border: none; 
+    padding: 5px 10px; 
+    cursor: pointer; 
+}
+  .button.active {
+	background-color: #d8d8d8;
+}
+.track-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.track-title {
+  font-size: 1em;
+}
+
+.track-artist {
+  font-size: 0.8em;
+  margin-top: 5px;
+}
+#repeatButton {
+  width: 25px;
+  height: 25px;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+}
+.icon-button {
+  background: url('images/del.svg') no-repeat center center;
+  background-size: 20px 20px;
+  border: none;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+
+.icon-button:active {
+  background-color: #a9a9a9;
+  border: none;
+  border-radius: 8px;
+}
+*:active, *:focus {
+  outline: none !important;
+}
+*::-moz-focus-inner {
+  border: 0 !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0075ff;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+#audio-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+#seek-bar {
+    width: 85%;
+}
+
+#volume-bar {
+	width: 15%
+}
+
+#mute-button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+	background: none;
+	display: flex;
+    justify-content: center;
+    align-items: center; 
+}
+
+#prev-track-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+	width: 30px;
+	height: 30px;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	background-color: white;
+	border: none;
+	border-radius: 5px;
+}
+
+#prev-track-button:hover {
+    background-color: #a9a9a9;
+}
+
+#play-pause-button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 30px;
+	height: 30px;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	background-color: white;
+	border: none;
+	border-radius: 5px;
+}
+
+#play-pause-button:hover {
+    background-color: #a9a9a9;
+}
+
+#add-button {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+	width: 30px;
+	height: 30px;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	background-color: white;
+	border: none;
+	border-radius: 5px;
+}
+
+#add-button:hover {
+    background-color: #a9a9a9;
+}
+
+#next-track-button {
+	display: flex;
+  justify-content: center;
+  align-items: center;
+	width: 30px;
+	height: 30px;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	background-color: white;
+	border: none;
+	border-radius: 5px;
+}
+
+#next-track-button:hover {
+    background-color: #a9a9a9;
+}
+
+#control-panel {
+  display: flex;
+}
+
+#control-panel button {
+  margin-right: 5px;
+}
+
+img {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Для Firefox */
+scrollbar-width: thin;
+scrollbar-color: #0075ff #f1f1f1;
+
+/* Для Internet Explorer и Edge */
+-ms-overflow-style: none;
+scrollbar-width: thin;
+scrollbar-color: #ff3662 #f1f1f1;
+  }
+</style>
+</head>
+<body>
+
+<div id="audio-player">
+  <ul id="playlist">
+    <!-- Треки будут добавлены здесь -->
+  </ul>
+  <div id="audio-controls">
+    <input type="range" id="seek-bar" value="0">
+	<button id="mute-button"><img src="images/volume.svg" width="16" height="16"></button>
+    <input type="range" id="volume-bar" min="0" max="100" value="40" >
+	<div id="repeatButton" class="button">
+	<img src="images/repeat.svg" alt="">
+	</div>
+  </div>
+   
+  <div id="control-panel">
+	<button id="prev-track-button" onclick="prevTrack()"><img src="images/back.svg" width="16" height="16"></button>
+    <button id="play-pause-button" onclick="playPause()"><img src="images/play.svg" width="16" height="16"></button>
+	<button id="next-track-button" onclick="nextTrack()"><img src="images/forw.svg" width="16" height="16"></button>
+	<button id="add-button" onclick="document.getElementById('file-input').click()"><img src="images/add.svg" width="16" height="16"></button>
+	<input type="file" id="file-input" multiple style="display:none" />
+  </div>
+</div>
+
+<script>
+var playlist = document.getElementById('playlist');
+var audio = new Audio();
+audio.volume = 0.4;
+
+let isRepeatEnabled = false;
+document.getElementById('play-pause-button').disabled = true;
+
+function toggleRepeat() {
+  isRepeatEnabled = !isRepeatEnabled;
+  document.getElementById('repeatButton').classList.toggle('active', isRepeatEnabled);
+}
+
+function playNextTrack() {
+  var currentTrack = playlist.querySelector('li.active');
+  if (currentTrack && currentTrack.nextSibling) {
+    currentTrack.nextSibling.click();
+  } else if (isRepeatEnabled) {
+    var firstTrack = playlist.querySelector('li');
+    if (firstTrack) {
+      firstTrack.click();
+    }
+  }
+}
+
+audio.addEventListener('ended', playNextTrack);
+document.getElementById('repeatButton').addEventListener('click', toggleRepeat);
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (isRepeatEnabled) {
+    document.getElementById('repeatButton').classList.add('active');
+  }
+});
+
+function addTrackToPlaylist(file) {
+  jsmediatags.read(file, {
+    onSuccess: function(tag) {
+      var li = document.createElement('li');
+      var coverImg = document.createElement('img');
+      var titleDiv = document.createElement('div');
+      var titleSpan = document.createElement('span');
+      var artistSpan = document.createElement('span');
+      var deleteBtn = document.createElement('button');
+	  
+
+      var trackName = tag.tags.title || file.name.split('.').slice(0, -1).join('.');
+      titleSpan.textContent = trackName;
+      artistSpan.textContent = tag.tags.artist || 'Неизвестный исполнитель';
+
+      if (tag.tags.picture) {
+        var picture = tag.tags.picture;
+        var base64String = "";
+        for (var i = 0; i < picture.data.length; i++) {
+            base64String += String.fromCharCode(picture.data[i]);
+        }
+        var imageUrl = "data:" + picture.format + ";base64," + window.btoa(base64String);
+        coverImg.setAttribute('src', imageUrl);
+      } else {
+        coverImg.setAttribute('src', 'images/album.png');
+      }
+
+      coverImg.classList.add('track-cover');
+      titleDiv.classList.add('track-info');
+      titleSpan.classList.add('track-title');
+      artistSpan.classList.add('track-artist');
+	  deleteBtn.classList.add('delete-btn', 'icon-button');
+      deleteBtn.textContent = '';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.onclick = function(event) {
+        event.stopPropagation();
+        removeTrackFromPlaylist(li);
+      };
+
+      titleDiv.appendChild(titleSpan);
+      titleDiv.appendChild(artistSpan);
+      li.appendChild(coverImg);
+      li.appendChild(titleDiv);
+      li.appendChild(deleteBtn);
+      playlist.appendChild(li);
+
+      li.onclick = function() {
+        var tracks = playlist.querySelectorAll('li');
+        tracks.forEach(function(track) {
+          track.classList.remove('active');
+        });
+        li.classList.add('active');
+        audio.src = URL.createObjectURL(file);
+        audio.play();
+		document.getElementById('play-pause-button').innerHTML = '<img src="images/pause.svg" width="16" height="16">';
+		document.getElementById('play-pause-button').disabled = false;
+      };
+    },
+    onError: function(error) {
+      console.log('Ошибка при чтении тегов: ', error);
+    }
+  });
+}
+
+playlist.ondrop = function(event) {
+  event.preventDefault();
+  var files = event.dataTransfer.files;
+  for (var i = 0; i < files.length; i++) {
+    addTrackToPlaylist(files[i]);
+  }
+  updatePlaylistMessage();
+};
+playlist.ondragover = function(event) {
+  event.preventDefault();
+};
+
+document.getElementById('file-input').onchange = function() {
+  var files = this.files;
+  for (var i = 0; i < files.length; i++) {
+    addTrackToPlaylist(files[i]);
+  }
+  updatePlaylistMessage();
+};
+
+function removeTrackFromPlaylist(trackElement) {
+  var isTrackPlaying = trackElement.classList.contains('active');
+  
+  if (isTrackPlaying) {
+    audio.pause();
+    var nextTrack = trackElement.nextSibling;
+    if (nextTrack) {
+      nextTrack.click();
+    }
+  }
+  
+  playlist.removeChild(trackElement);
+  updatePlaylistMessage();
+}
+
+function updatePlaylistMessage() {
+  if(playlist.children.length === 0) {
+    var emptyMessage = document.createElement('p');
+    emptyMessage.textContent = "Перетащите ваши аудиофайлы сюда, для просмотра всех аудиофайлов на устройстве, перейдите в раздел треки";
+    emptyMessage.style.textAlign = 'center';
+    emptyMessage.style.padding = '20px';
+    emptyMessage.style.color = 'grey';
+    playlist.appendChild(emptyMessage);
+  } else {
+    if(playlist.querySelector('p')) {
+      playlist.removeChild(playlist.querySelector('p'));
+    }
+  }
+}
+const seekBar = document.getElementById('seek-bar');
+const volumeBar = document.getElementById('volume-bar');
+const muteButton = document.getElementById('mute-button');
+
+audio.addEventListener('timeupdate', function() {
+    const currentTime = audio.currentTime;
+    const duration = audio.duration;
+    const progress = (currentTime / duration) * 100;
+    seekBar.value = progress;
+});
+
+seekBar.addEventListener('input', function() {
+    const seekValue = seekBar.value;
+    const duration = audio.duration;
+    const currentTime = (seekValue / 100) * duration;
+    audio.currentTime = currentTime;
+});
+
+volumeBar.addEventListener('input', function() {
+    const volumeValue = volumeBar.value / 100;
+    audio.volume = volumeValue;
+});
+
+muteButton.addEventListener('click', function() {
+    if (audio.muted) {
+        audio.muted = false;
+        muteButton.innerHTML = '<img src="images/volume.svg" width="16" height="16">';
+    } else {
+        audio.muted = true;
+        muteButton.innerHTML = '<img src="images/mute.svg" width="16" height="16">';
+    }
+});
+
+function playPause() {
+    if (audio.paused) {
+        audio.play();
+        document.getElementById('play-pause-button').innerHTML = '<img src="images/pause.svg" width="16" height="16">';
+    } else {
+        audio.pause();
+        document.getElementById('play-pause-button').innerHTML = '<img src="images/play.svg" width="16" height="16">';
+    }	
+	
+}
+
+function prevTrack() {
+  var currentTrack = playlist.querySelector('li.active');
+  if (currentTrack && currentTrack.previousSibling) {
+    currentTrack.previousSibling.click();
+  }
+}
+
+function nextTrack() {
+  var currentTrack = playlist.querySelector('li.active');
+  if (currentTrack && currentTrack.nextSibling) {
+    currentTrack.nextSibling.click();
+  }
+}
+document.addEventListener('DOMContentLoaded', updatePlaylistMessage);
+</script>
+
+</body>
+</html>
